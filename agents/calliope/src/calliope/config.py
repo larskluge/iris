@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     # Learning loop: curate the style guide after this many uncurated edits.
     curate_threshold: int = 5
 
-    # mycelium_prod (read-only seed corpus) via SSH tunnel to outpost — resolved in M1.
-    mycelium_ssh_host: str = "outpost"
-    mycelium_pg_dsn: str = "postgresql://readonly@localhost:6543/mycelium_prod"
+    # mycelium read models (read-only seed corpus). Default = local dev DB; point
+    # at mycelium_prod on outpost (readonly role / SSH tunnel) for the real seed.
+    mycelium_pg_dsn: str = "postgresql://postgres:postgres@localhost:5433/mycelium_dev"
+    mycelium_self_emails: list[str] = [
+        "l@larskluge.com", "me@aekym.com", "la@aekym.com", "andreas@aekym.com",
+    ]
+    mycelium_self_names: list[str] = ["Lars", "Lars Kluge"]

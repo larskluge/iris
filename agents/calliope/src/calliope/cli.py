@@ -3,7 +3,8 @@ plus the learning commands (`learn`, `rollback`) and `status`."""
 
 import typer
 
-from calliope import curator
+from calliope import corpus, curator
+from calliope import seed as seeder
 from calliope.config import Settings
 from calliope.errors import CalliopeError
 from calliope.lettaclient import LettaClient
@@ -95,6 +96,19 @@ def rollback(version: int):
     settings, letta, store, agent = _wire()
     new_version = curator.rollback(letta, agent, store, version)
     typer.echo(f"rolled back to v{version} (recorded as v{new_version})")
+
+
+@app.command()
+def seed(limit: int = 200, kind: str = "email,message"):
+    """Seed the voice style guide from your sent mail/messages (mycelium)."""
+    settings, letta, store, agent = _wire()
+    kinds = tuple(k.strip() for k in kind.split(","))
+    records = corpus.read_corpus(settings, kinds=kinds, limit=limit)
+    if not records:
+        typer.echo("no corpus records found — check CALLIOPE_MYCELIUM_PG_DSN and the self identifiers")
+        raise typer.Exit(1)
+    guide = seeder.seed_agent(settings, letta, agent, store, records)
+    typer.echo(f"seeded voice_style_guide from {len(records)} records ({len(guide)} chars). Try `calliope status`.")
 
 
 @app.command()

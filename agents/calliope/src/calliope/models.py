@@ -24,6 +24,17 @@ class EditRecord(BaseModel):
     captured_at: str = Field(default_factory=_now)
 
 
+class CorpusRecord(BaseModel):
+    """One piece of Lars's sent writing, normalized from a mycelium read model."""
+
+    kind: str  # 'email' | 'message'
+    text: str
+    recipient: str | None = None
+    subject: str | None = None
+    platform: str | None = None
+    sent_at: str | None = None
+
+
 class StyleGuideVersion(BaseModel):
     version: int
     value: str
