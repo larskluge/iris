@@ -98,7 +98,7 @@ Each unit has one purpose, a defined interface, and can be tested independently.
   "url": "https://outpost/iris/agents/calliope",   // mailbox (localhost for P0)
   "skills": [{"id": "draft"}, {"id": "translate"}, {"id": "learn"}, {"id": "seed"}],
   "x-iris": {
-    "model": "gemma4:31b-it-q8_0",
+    "model": "gemma4:31b-mlx",
     "tier": "local-general",
     "max_task_class": "writing",
     "languages": ["en", "de"],
@@ -211,7 +211,7 @@ Tier ladder note: `local-general` sits on the local rung; because `local_only` i
 ## 12. Open spikes (resolve during build)
 
 - **`mycelium_prod` schema** — introspect the read models: which tables/views hold Lars's **sent** emails and messages, how "sent by Lars" is identified, and how text/recipient/timestamp are exposed. Time-boxed before the corpus reader.
-- **A2A ⇄ Letta bridge** — same spike as prototype §12; confirm the clean way to expose `calliope` as an A2A agent.
+- **A2A ⇄ Letta bridge** — same spike as prototype §12; confirm the clean way to expose `calliope` as an A2A agent. **Partially resolved (M0.3):** Letta (v0.16.8, SDK `letta-client` 1.12.1) is used as the **memory plane only** — it stores the `calliope` agent + `persona`/`voice_style_guide` blocks (`agents.blocks.update/retrieve`) and auto-discovers the Ollama models (`ollama/gemma4:31b-mlx`). **Draft/translate generation runs via direct Ollama** (`/api/chat`, `think:false` — Gemma 4 is a thinking model and otherwise leaves `content` empty), not Letta's agentic tool-calling loop, since a local model is not a reliable tool-caller. This keeps the chat path robust and testable while Letta owns durable identity/memory (R8).
 - **Curation cadence & guardrails** — tune the edit threshold and the "reject degenerate rewrite" check so the style guide improves without thrashing (vision §12 memory-drift risk).
 - **Model — pinned (resolved via research, 2026-06-23):** **Gemma 4 31B Dense** via Ollama (`gemma4:31b-it-q8_0`, ~34 GB, or the Metal-optimized `gemma4:31b-mlx` for speed), `num_ctx 65536`. Chosen for best-documented **German + English + translation** strength and #3-open human-preference standing (natural, non-"AI-ese" prose), native system role for style-guide adherence, Apache 2.0, fits 128 GB easily. **Lean alternative (same family, drop-in):** Gemma 4 26B-A4B MoE (`gemma4:26b-a4b-it-q8_0`, ~3.8 B active) if interactive speed matters. **Not adopted locally:** Qwen3-235B-A22B-2507 — best open creative writer (EQ-Bench v3 0.875) but only fits this 128 GB box at side-loaded IQ3, eroding the prose/German quality it'd be chosen for. **Risk to validate (M1/M3):** some reviews call Gemma 4 prose "correct but bland" — if voice feels flat, bring **exemplar/pgvector grounding** (§11) forward. *(Model names from live web research beyond the Jan-2026 cutoff; re-confirm exact Ollama tags at M0 build time.)*
 

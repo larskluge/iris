@@ -9,7 +9,9 @@ services:
       POSTGRES_PASSWORD: calliope
       POSTGRES_DB: calliope
     ports: ["5434:5432"]   # 5433 is taken by mycelium_postgres on this host
-    volumes: ["pgdata:/var/lib/postgresql/data"]
+    volumes:
+      - "pgdata:/var/lib/postgresql/data"
+      - "./postgres/init:/docker-entrypoint-initdb.d:ro"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U calliope"]
       interval: 5s
@@ -19,6 +21,17 @@ services:
     image: nats:2.10
     command: ["-js", "-m", "8222"]
     ports: ["4222:4222", "8222:8222"]
+
+  letta:
+    image: letta/letta:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      LETTA_PG_URI: postgresql://calliope:calliope@postgres:5432/calliope
+      OLLAMA_BASE_URL: http://host.containers.internal:11434
+    extra_hosts: ["host.containers.internal:host-gateway"]
+    ports: ["8283:8283"]
 
 volumes:
   pgdata:
