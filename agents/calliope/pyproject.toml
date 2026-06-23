@@ -1,13 +1,14 @@
 [project]
 name = "calliope"
 version = "0.1.0"
-description = "Add your description here"
+description = "Calliope — self-learning copywriter (Iris's first agent)"
 readme = "README.md"
 authors = [
     { name = "Lars", email = "l@larskluge.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "psycopg[binary]>=3.3.4",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",
 ]
@@ -22,4 +23,9 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: requires running services (postgres/nats/letta/ollama)",
 ]

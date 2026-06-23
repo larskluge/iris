@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     model: str = "gemma4:31b-mlx"
 
     # Control-plane services (podman compose).
-    pg_dsn: str = "postgresql://calliope:calliope@localhost:5433/calliope"
+    pg_dsn: str = "postgresql://calliope:calliope@localhost:5434/calliope"
     nats_url: str = "nats://localhost:4222"
     letta_base_url: str = "http://localhost:8283"
 
