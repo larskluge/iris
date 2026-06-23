@@ -24,6 +24,18 @@ class EditRecord(BaseModel):
     captured_at: str = Field(default_factory=_now)
 
 
+class StyleGuideVersion(BaseModel):
+    version: int
+    value: str
+    changelog: str = ""
+
+
+class CurationResult(BaseModel):
+    version: int
+    changelog: str
+    changed: bool
+
+
 class TaskEnvelope(BaseModel):
     """Async task shape (mailbox -> NATS -> dispatcher). Mirrors dispatcher/envelope.go."""
 

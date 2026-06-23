@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     nats_url: str = "nats://localhost:4222"
     letta_base_url: str = "http://localhost:8283"
 
+    # Learning loop: curate the style guide after this many uncurated edits.
+    curate_threshold: int = 5
+
     # mycelium_prod (read-only seed corpus) via SSH tunnel to outpost — resolved in M1.
     mycelium_ssh_host: str = "outpost"
     mycelium_pg_dsn: str = "postgresql://readonly@localhost:6543/mycelium_prod"
