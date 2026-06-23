@@ -9,35 +9,50 @@ talks to the host Ollama endpoint.
 import httpx
 
 from calliope.config import Settings
+from calliope.errors import ModelUnavailableError
 
 
-def generate(
+def chat(
     settings: Settings,
-    system: str,
-    user: str,
+    messages: list[dict],
     *,
     num_predict: int = 1024,
     temperature: float = 0.7,
     think: bool = False,
     timeout: float = 180.0,
 ) -> str:
-    """Generate a completion. `think=False` disables Gemma 4's reasoning trace so
-    the response is the prose draft itself (a thinking model otherwise spends
-    tokens on a `thinking` field and may leave `content` empty)."""
+    """Send a full message list (incl. a leading system message) to the local
+    Ollama model and return the assistant text.
+
+    `think=False` disables Gemma 4's reasoning trace so the response is the prose
+    itself (a thinking model otherwise spends tokens on a `thinking` field and may
+    leave `content` empty). Connection/HTTP failures become ModelUnavailableError
+    so the REPL can show a clean message instead of a stack trace (R13: no cloud
+    fail-over — the caller decides whether to defer or surface)."""
+    try:
+        resp = httpx.post(
+            f"{settings.ollama_base_url}/api/chat",
+            json={
+                "model": settings.model,
+                "messages": messages,
+                "stream": False,
+                "think": think,
+                "options": {"num_predict": num_predict, "temperature": temperature},
+            },
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+    except httpx.HTTPError as e:
+        raise ModelUnavailableError(
+            f"Local model '{settings.model}' is unreachable at {settings.ollama_base_url} ({e})."
+        ) from e
+    return resp.json()["message"]["content"]
+
+
+def generate(settings: Settings, system: str, user: str, **kwargs) -> str:
+    """Convenience: single system + user turn."""
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": user})
-    resp = httpx.post(
-        f"{settings.ollama_base_url}/api/chat",
-        json={
-            "model": settings.model,
-            "messages": messages,
-            "stream": False,
-            "think": think,
-            "options": {"num_predict": num_predict, "temperature": temperature},
-        },
-        timeout=timeout,
-    )
-    resp.raise_for_status()
-    return resp.json()["message"]["content"]
+    return chat(settings, messages, **kwargs)
