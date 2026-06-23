@@ -5,6 +5,7 @@
 **Date:** 2026-06-09
 **Status:** Draft for review
 **Author:** Lars + Claude
+**Updated:** 2026-06-23 — added containerization (§7.6; plane in §6; podman in §8; note in §13)
 
 ---
 
@@ -81,7 +82,7 @@ The system is "done enough" when these all work:
 
 ## 6. Architecture
 
-Six planes, each owned by one component so responsibilities don't overlap:
+Seven planes, each owned by one component so responsibilities don't overlap:
 
 | Plane | Owner | Responsibility |
 |---|---|---|
@@ -91,6 +92,7 @@ Six planes, each owned by one component so responsibilities don't overlap:
 | Durability | **NATS JetStream** *(Temporal optional, §8)* | Holding work for offline nodes; resume |
 | Execution | **Local/cloud models + workers** | Actually running inference |
 | Tools | **MCP** | What an agent can *do* (files, data, Mycelium read models) |
+| Packaging & Isolation | **Container runtime (podman)** | Hermetic per-agent execution environment; reproducible service deployment |
 
 ```
                                    ┌─────────────────── CLOUD ───────────────────┐
@@ -177,6 +179,17 @@ A2A is request/response — pushing to an offline node fails. So **invert it: no
 - Letta provides persistent, self-editing memory; **memory subagents** periodically review sessions and rewrite/refine context.
 - **Honest caveat (carry into expectations):** this is *learning in token space* — in-context memory curation, **not weight-level learning**. If the model never chooses to save something, it's gone. Iris treats memory quality as a thing to *engineer* (review cadence, what to persist), not a free lunch.
 
+### 7.6 Per-agent containerization & hermetic execution
+
+**Reproducibility requirement:** an agent's output must depend only on its own defined world — its image, its pinned skills/tools, and its Letta memory — **not** on ambient host state: the host's global `~/.claude/CLAUDE.md`, globally-installed skills, or leftover files from a previous run in the working path. The same agent must behave the same whether it runs on the laptop, the outpost, or any other host.
+
+- **Per-agent container (ephemeral).** Each agent runs in its own container, built from a pinned image, launched **fresh for every task** and torn down after. The image carries the agent's runtime, skills, and tools; the host's global configuration is never mounted in. Every run starts from an identical, clean filesystem.
+- **Intentional vs incidental state.** The only state that survives a run is the agent's **Letta memory** (in Postgres) — this is *intentional* state. Filesystem contents (global config, skills cruft, prior-run leftovers) are *incidental* and are wiped between runs. Cross-run contamination dies by construction.
+- **Shared services containerized.** Letta, Postgres, NATS JetStream, the LangGraph orchestrator, and MCP servers each run in their own container.
+- **Model serving is a shared per-host capability, not per-agent.** Models dominate RAM (§9) and must not be duplicated per agent — one model server per host serves all local agents by tier. On **macOS** hosts the model server runs **natively** (Metal/MLX) because containers cannot reach the Mac GPU; agent containers reach it over the host network. On **Linux** hosts the model server is itself containerized with GPU passthrough.
+- **The worker becomes a dispatcher.** The node-level NATS pull-worker (§7.3) no longer holds agent-specific code: it pulls a task from `iris.tasks.<node>`, launches the target agent's pinned image with the task envelope, captures the result, and tears the container down.
+- **Reproducibility scope (honest).** Containers eliminate host- and filesystem-level contamination *completely*. They do **not** make LLM outputs deterministic: model-backend variance (a local Metal server on one host vs. a different inference engine on another) is a separate axis, minimized by pinning the model and quantization. Agents backed by a **cloud API model** (e.g. Claude) get near-total reproducibility, since the model is identical regardless of host.
+
 ## 8. Component stack
 
 | Layer | Pick | Version (as of 2026-06-09) | Why |
@@ -188,6 +201,7 @@ A2A is request/response — pushing to an offline node fails. So **invert it: no
 | Durability / queue | **NATS JetStream** *(default)* | current stable | Durable per-node streams; offline pickup at ~100 MB |
 | Durability *(optional, on growth)* | **Temporal** | — | Promote when multi-step cross-machine workflows multiply (see §8.1) |
 | State store | **PostgreSQL** (shared) | — | One instance: Letta memory + LangGraph checkpoints (+ Temporal if adopted) |
+| Packaging & isolation | **podman** (rootless) + compose/pod | current stable | Hermetic per-agent containers + one container per shared service; already the outpost convention (Mycelium + hermes) |
 
 ### 8.1 Temporal: optional, not key (decision recorded)
 
@@ -240,3 +254,5 @@ Framework overhead is small and predictable; **the model dominates.**
 | **P3 — Memory** | Self-learning loop tuned; memory-layer bake-off; measurable improvement on a recurring task. |
 | **P4 — Fleet** | Multiple agents across all three substrates; Mycelium read-model tools; security hardening (signed cards, scope). |
 | **P5 — Scale decision** | Re-evaluate Temporal at the workflow-complexity inflection (§8.1). |
+
+**Containerization** (§7.6) lands incrementally: **P0** containerizes all agents and services on a **single host (localhost)** with the model server native; **cross-machine** container deployment on outpost and **GPU-passthrough** model containers are **P1+**.

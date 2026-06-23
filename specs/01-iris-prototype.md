@@ -5,6 +5,7 @@
 **Status:** Draft for review
 **Depends on:** `00-iris-vision-and-stack.md`
 **Implements:** R1–R8 (partial), proves §7.1 (tier delegation) and §7.3 (offline durability)
+**Updated:** 2026-06-23 — containerization, localhost-only orchestration for P0 (§7.6 of vision)
 
 ---
 
@@ -33,9 +34,9 @@ A demo is "passing" only with a **logged trace** and an **automated test** (§9)
 
 ## 3. Scope
 
-**In scope:** 3 agents, 2 hosts, A2A delegation, tier decision, NATS mailbox + pull-worker, Letta-backed state, one MCP tool (filesystem) for the coding demo, a thin LangGraph router.
+**In scope:** 3 agents, **single host (localhost)**, A2A delegation, tier decision, NATS mailbox + pull-worker, Letta-backed state, one MCP tool (filesystem) for the coding demo, a thin LangGraph router. **All agents and shared services run in containers** (§7.6 of vision); agents are **ephemeral per-task** containers launched by the dispatcher; the **model server runs natively** (macOS/Metal) and containers reach it over the host network.
 
-**Out of scope (deferred to P1+):** signed Agent Cards / auth, scope attenuation, Temporal, fail-over/circuit-breaker (Demo C uses plain defer, not fail-over), multi-tier ladders beyond 2 tiers, Mycelium read-model tools, dashboard/UI, multi-user, the self-learning loop beyond the D1 smoke test.
+**Out of scope (deferred to P1+):** signed Agent Cards / auth, scope attenuation, Temporal, fail-over/circuit-breaker (Demo C uses plain defer, not fail-over), multi-tier ladders beyond 2 tiers, Mycelium read-model tools, dashboard/UI, multi-user, the self-learning loop beyond the D1 smoke test, **cross-machine deployment (outpost split), GPU-passthrough model container**.
 
 ## 4. Topology
 
@@ -46,6 +47,8 @@ A demo is "passing" only with a **logged trace** and an **automated test** (§9)
 | Small local agent | **laptop** | Local small model (3B–8B), runs as a NATS pull-worker |
 
 > **Dev shortcut:** for first bring-up, collapse "outpost" onto the laptop (everything localhost), then split outpost↔laptop onto two hosts to prove the cross-machine + offline legs. The split is what makes B/C real.
+
+> **P0 decision (2026-06-23):** P0 stays at the localhost stage — all roles collapse onto one host, with **every agent and service in a container** and the **model server native** (macOS/Metal). The cross-machine split is **deferred**; B and C are proven on localhost by **simulating offline** — stop the agent's container/dispatcher so its tasks queue in JetStream, then restart to drain. Cross-machine is what later makes B/C *fully* real.
 
 ## 5. Components & versions (pinned)
 
@@ -58,6 +61,7 @@ A demo is "passing" only with a **logged trace** and an **automated test** (§9)
 | MCP | filesystem server | Coding agent's file read/write tool |
 | PostgreSQL | one instance (port per Mycelium convention) | Letta state + LangGraph checkpoints |
 | Language | **Python 3.12** | All SDKs first-class in Python; A2A keeps it interoperable with Elixir later |
+| Containers | **podman** (rootless) + compose/pod | Per-agent ephemeral containers + one container per shared service; model server stays native on macOS |
 
 ## 6. Data model
 
@@ -122,11 +126,11 @@ A demo is "passing" only with a **logged trace** and an **automated test** (§9)
 
 > Follow the bug-fix/feature protocol: red → green, and for each acceptance criterion keep the test that proves it.
 
-- **M0 — Infra (outpost/local):** Postgres up; NATS+JetStream up with streams `iris.tasks.*`, `iris.results.*`; Letta server running. *Test:* health-check script asserts all three reachable.
-- **M1 — Agents + cards:** define 3 Letta agents (small-local, code-agent, + a caller harness); serve Agent Cards with `x-iris` tier ext; build the tier registry from cards + presence. *Test:* registry resolves each agent's tier/url; `assert tier(small-local) < tier(code-agent)`.
+- **M0 — Infra (localhost, containerized):** Postgres, NATS+JetStream (streams `iris.tasks.*`, `iris.results.*`), and Letta server each run in their own container via compose/pod; the model server runs natively (macOS/Metal), reachable from containers over the host network. *Test:* health-check script asserts all services reachable from inside a container.
+- **M1 — Agents + cards + images:** define 3 Letta agents (small-local, code-agent, + a caller harness); serve Agent Cards with `x-iris` tier ext; build the tier registry from cards + presence. Each agent has a **pinned container image** carrying its runtime/skills/tools; no host global config is mounted. *Test:* registry resolves each agent's tier/url; `assert tier(small-local) < tier(code-agent)`; an agent image produces the same result with the host's global config absent (hermeticity check).
 - **M2 — Router + tier decision (A1/A2 logic):** LangGraph router graph with `assess` + conditional edge (`local | delegate | defer`); a cheap task classifier. *Test:* trivial task → `route=local`; coding task → `route=delegate` (target online).
 - **M3 — A2A online delegation (Demo A):** wire the `delegate` edge to an A2A client call; code-agent exposes A2A server + MCP filesystem tool. *Test = A1, A2* with logged trace.
-- **M4 — Mailbox + NATS pull-worker (Demo B):** mailbox endpoint publishes to `iris.tasks.<node>` and returns `working`; laptop worker is a durable pull consumer that executes + replies. *Test = B1* (worker stopped → queued), *B2* (worker started → drained, result returned, nothing lost).
+- **M4 — Mailbox + dispatcher (Demo B):** mailbox endpoint publishes to `iris.tasks.<node>` and returns `working`; the **dispatcher** is a durable pull consumer that, per task, launches the target agent's **ephemeral container**, captures the result, and tears it down. *Test = B1* (dispatcher/container stopped → queued), *B2* (restarted → drained, fresh container runs, result returned, nothing lost).
 - **M5 — Combined + resume (Demo C):** presence heartbeat; router `defer` path → `interrupt()` + checkpoint; resumer service resumes graph on result. *Test = C1* (target offline → queue → reconnect → integrated result).
 - **M6 — Self-learning smoke (D1, stretch):** run a recurring task 3×; assert a curated Letta memory block exists and the 3rd run references it. *Test = D1.*
 
@@ -149,7 +153,7 @@ A demo is "passing" only with a **logged trace** and an **automated test** (§9)
 
 ## 11. Explicitly deferred (do NOT build in P0)
 
-Signed cards / auth · scope attenuation · Temporal · fail-over & circuit-breaker (C uses plain defer) · >2 tiers · Mycelium tools · dashboard · the full self-learning loop · multi-user. These are P1+ in the vision roadmap.
+Signed cards / auth · scope attenuation · Temporal · fail-over & circuit-breaker (C uses plain defer) · >2 tiers · Mycelium tools · dashboard · the full self-learning loop · multi-user · cross-machine container deploy (outpost split) · GPU-passthrough model container. These are P1+ in the vision roadmap.
 
 ## 12. Open spikes (resolve during P0, feed back into vision §12)
 
