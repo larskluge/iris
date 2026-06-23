@@ -3,7 +3,7 @@
 **Codename:** Calliope *(muse of eloquence, "beautiful-voiced" — sits beside `iris`, `atlas`, `kubera` in the Greek register; alt: `peitho`. Rename freely.)*
 **Version:** 0.1
 **Date:** 2026-06-23
-**Status:** Draft for review
+**Status:** Implemented & merged to main (2026-06-23) — see §14 and `agents/calliope/README.md`
 **Author:** Lars + Claude
 **Depends on:** `00-iris-vision-and-stack.md`, `01-iris-prototype.md`
 **Proves (incrementally):** R8 (persistent identity/memory decoupled from model/host), R9 / §7.5 (self-learning by memory curation), R13 (local-only data boundary). Exercises the full P0 plane model on a single, genuinely useful agent.
@@ -224,3 +224,20 @@ Tier ladder note: `local-general` sits on the local rung; because `local_only` i
 | M2 | Chat REPL → Letta draft/translate in-session (**W1, T1**) + async task path & offline durability via mailbox+dispatcher (**O1**) | ~1–2 sessions |
 | M3 | Learn path: diff capture + curator + versioning/rollback (**L1, L2**) — the R9 proof | ~1–2 sessions |
 | M4 | Portability + hardening (**P1**), polish CLI (`status`, `rollback`) | ~0.5–1 session |
+
+## 14. Implementation status (2026-06-23)
+
+Built and merged to main; full suite green (35 Python + Go).
+
+| Area | State |
+|---|---|
+| Control plane — Postgres (5434) + NATS + Letta 0.16.8, podman | done |
+| Memory plane (R8) — Letta agent + `persona`/`voice_style_guide` blocks; survives restart | done |
+| Generation — direct Ollama `gemma4:31b-mlx` (`think:false`); local-only (R13) | done |
+| Chat REPL — draft · steer · `/edit` · `/translate` EN↔DE · `/accept` | done |
+| Self-learning (R9) — versioned style guide, curator, rollback | done |
+| Seed — voice from mycelium read models (dev DB; prod = outpost) | done |
+| Async — Go dispatcher + ephemeral container + offline durability (O1) | done |
+| Roadmap | hermeticity test (H1), model-swap (P1), presence heartbeat, cross-machine, exemplar grounding, Mycelium-passive learning |
+
+Resolved spikes: Letta = memory only + direct-Ollama generation (§12); mycelium schema (`docs/plans/notes/mycelium-corpus-schema.md`); model pinned to `gemma4:31b-mlx`. Front doors realized as the sync chat REPL and the async dispatcher path.

@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status (2026-06-23):** Implemented and merged to main — M0, chat, M3 (learning), Letta persistence, M1 (seed), M2 (async). Usage: `agents/calliope/README.md`. Remaining: M4 hardening.
+
 **Goal:** Build Calliope — Iris's first agent — a local-only, self-learning copywriter that drafts emails/messages in Lars's voice (English + German, with in-voice translation) and improves by curating its own memory.
 
 **Architecture:** Letta is the brain — a containerized Letta agent holds identity + memory blocks (`persona`, `voice_style_guide`) + conversation, backed by Postgres, using a native Ollama model (`gemma4:31b-mlx`) over `host.containers.internal:11434`. Humans reach the agent **synchronously** through a Python chat REPL (drafting/translation = Letta messages). Machine/durable work reaches it **asynchronously** through a NATS JetStream mailbox drained by a **Go dispatcher** that launches an ephemeral agent container per task. Learning: an accepted REPL session emits an `EditRecord`; a curator subagent periodically rewrites `voice_style_guide`.
