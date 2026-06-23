@@ -10,6 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
     "langdetect>=1.0.9",
     "letta-client>=1.12.1",
+    "nats-py>=2.15.0",
     "psycopg[binary]>=3.3.4",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",

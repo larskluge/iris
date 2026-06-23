@@ -1,5 +1,9 @@
 """`calliope` CLI — the interactive chat front door (a thin I/O loop over ChatSession),
-plus the learning commands (`learn`, `rollback`) and `status`."""
+plus the learning commands (`learn`, `rollback`), `seed`, `status`, and the async
+`serve-task` entrypoint the dispatcher runs in an ephemeral container."""
+
+import json
+import sys
 
 import typer
 
@@ -109,6 +113,21 @@ def seed(limit: int = 200, kind: str = "email,message"):
         raise typer.Exit(1)
     guide = seeder.seed_agent(settings, letta, agent, store, records)
     typer.echo(f"seeded voice_style_guide from {len(records)} records ({len(guide)} chars). Try `calliope status`.")
+
+
+@app.command(name="serve-task")
+def serve_task(envelope: str = typer.Argument("")):
+    """Process one async task envelope (JSON via arg or stdin) -> result JSON on stdout.
+
+    This is what the Go dispatcher runs inside a fresh, hermetic container per task.
+    Only the JSON result is written to stdout."""
+    raw = envelope or sys.stdin.read()
+    env = json.loads(raw)
+    settings, letta, store, agent = _wire()
+    session = ChatSession(settings, letta, agent)
+    brief = (env.get("payload") or {}).get("brief", "")
+    result = session.send(brief)
+    sys.stdout.write(json.dumps({"task_id": env.get("task_id"), "result": result}))
 
 
 @app.command()
