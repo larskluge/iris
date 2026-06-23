@@ -4,7 +4,7 @@ Notes for agents working in this repo (Iris — a mesh of self-learning agents).
 
 ## Layout
 
-- `specs/` — vision + design. Read `02-calliope-copywriter-design.md` before touching Calliope.
+- `docs/specs/` — vision + design. Read `02-calliope-copywriter-design.md` before touching Calliope.
 - `agents/calliope/` — Calliope agent (Python 3.12, `uv`). See its README.
 - `dispatcher/` — Go NATS pull-worker; runs agent tasks in containers.
 - `deploy/` — podman compose: Postgres, NATS, Letta.

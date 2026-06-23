@@ -10,7 +10,7 @@
 
 **Tech Stack:** Python 3.12 (via `uv`) for the agent layer (Letta SDK, pydantic, LangGraph, the REPL/CLI, seeder, curator); Go 1.26 for the dispatcher/pull-worker; podman (compose) for Postgres (pgvector) + NATS JetStream + Letta server; Ollama native (Metal) serving Gemma 4 31B; `mycelium_prod` (on outpost, read-only) as the seed corpus.
 
-**Spec:** `specs/02-calliope-copywriter-design.md`. **Depends on:** `specs/00-iris-vision-and-stack.md`, `specs/01-iris-prototype.md`.
+**Spec:** `docs/specs/02-calliope-copywriter-design.md`. **Depends on:** `docs/specs/00-iris-vision-and-stack.md`, `docs/specs/01-iris-prototype.md`.
 
 ---
 
@@ -33,7 +33,7 @@
 
 ```
 iris/
-  specs/                                  # existing (00, 01, 02)
+  docs/specs/                             # existing (00, 01, 02)
   docs/plans/2026-06-23-calliope-implementation.md   # this plan
   deploy/
     compose.yaml                          # podman compose: postgres, nats, letta
@@ -289,7 +289,7 @@ class LettaClient:
 
 - [ ] **Step 5: Run the smoke** — `uv run pytest tests/test_lettaclient.py -m integration -v` → PASS (non-empty reply from Gemma 4)
 
-- [ ] **Step 6: Sync the spec's model tag** — update `specs/02-...` §6.1 card `model` to `gemma4:31b-mlx` (matches the box). Commit spec + code:
+- [ ] **Step 6: Sync the spec's model tag** — update `docs/specs/02-...` §6.1 card `model` to `gemma4:31b-mlx` (matches the box). Commit spec + code:
 
 ```bash
 git add agents/calliope deploy specs && git commit -m "feat(calliope): letta server + ollama smoke (gemma4:31b-mlx)"

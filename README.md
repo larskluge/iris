@@ -1,6 +1,6 @@
 # Iris
 
-A mesh of stateful, self-learning agents. See `specs/` for the vision (`00`), the
+A mesh of stateful, self-learning agents. See `docs/specs/` for the vision (`00`), the
 P0 prototype (`01`), and the first agent (`02`).
 
 ## Agents
@@ -11,7 +11,7 @@ P0 prototype (`01`), and the first agent (`02`).
 
 | Path | What |
 |---|---|
-| `specs/` | vision + design specs |
+| `docs/specs/` | vision + design specs |
 | `agents/calliope/` | Calliope agent (Python) — see its README |
 | `dispatcher/` | Go NATS pull-worker; runs agent tasks in containers |
 | `deploy/` | podman compose: Postgres, NATS, Letta |
