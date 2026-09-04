@@ -13,7 +13,7 @@ over time by curating its own style guide from your edits. Nothing leaves the la
 
 ## Prerequisites
 
-- `podman`, `uv`, Ollama with `gemma4:31b-mlx` pulled, Go 1.26 (dispatcher only).
+- Homebrew Python 3.14.7 for the host environment; `podman`, `uv`, Ollama with `gemma4:31b-mlx` pulled, Go 1.26 (dispatcher only).
 - `make up` (from repo root) starts Postgres + NATS + Letta.
 
 ## Quickstart
@@ -21,6 +21,7 @@ over time by curating its own style guide from your edits. Nothing leaves the la
 ```bash
 make up                  # start Postgres + NATS + Letta
 cd agents/calliope
+uv sync --python /opt/homebrew/bin/python3.14 --frozen
 uv run calliope seed     # learn your voice from the mycelium corpus
 uv run calliope chat     # draft interactively
 ```

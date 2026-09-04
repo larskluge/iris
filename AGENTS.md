@@ -5,7 +5,7 @@ Notes for agents working in this repo (Iris — a mesh of self-learning agents).
 ## Layout
 
 - `docs/specs/` — vision + design. Read `02-calliope-copywriter-design.md` before touching Calliope.
-- `agents/calliope/` — Calliope agent (Python 3.12, `uv`). See its README.
+- `agents/calliope/` — Calliope agent (host Python 3.14.7, `uv`). See its README.
 - `dispatcher/` — Go NATS pull-worker; runs agent tasks in containers.
 - `deploy/` — podman compose: Postgres, NATS, Letta.
 
@@ -18,7 +18,7 @@ Notes for agents working in this repo (Iris — a mesh of self-learning agents).
 ## Conventions
 
 - TDD: failing test → implement → green. Small, scoped commits.
-- Python via `uv`, pinned to 3.12 (system Python is 3.14; Letta lacks 3.14 wheels).
+- Host Python via `uv`, pinned to 3.14.7 (Homebrew); the locked Letta client supports this runtime. The container runtime is configured separately in the Dockerfile.
 - Mark service-dependent tests `@pytest.mark.integration`.
 - Anonymize committed test data — no real names/PII.
 - Commit lock files (`uv.lock`, `go.sum`) on dependency changes.
