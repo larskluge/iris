@@ -70,7 +70,7 @@ Override via `CALLIOPE_`-prefixed env vars (`src/calliope/config.py`):
 | `CALLIOPE_PG_DSN` | `postgresql://calliope:calliope@localhost:5434/calliope` |
 | `CALLIOPE_LETTA_BASE_URL` | `http://localhost:8283` |
 | `CALLIOPE_NATS_URL` | `nats://localhost:4222` |
-| `CALLIOPE_MYCELIUM_PG_DSN` | local `mycelium_dev`; point at `mycelium_prod` (outpost) for the real seed |
+| `CALLIOPE_MYCELIUM_PG_DSN` | `postgresql://readonly@localhost:5432/mycelium_dev`, the host's Postgres; the password comes from `~/.pgpass` or `PGPASSWORD`, or put a DSN that carries it here (the dispatcher passes its own value of this variable to the agent container). Point it at `mycelium_prod` (outpost) for the real seed |
 | `CALLIOPE_CURATE_THRESHOLD` | `5` |
 
 ## Tests

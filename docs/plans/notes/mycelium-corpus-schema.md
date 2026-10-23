@@ -1,8 +1,9 @@
 # mycelium corpus schema (M1 spike, 2026-06-23)
 
 Read-only introspection of the Mycelium read models. Dev data lives locally in
-the `mycelium_postgres` container (db `mycelium_dev`, `postgres/postgres`,
-localhost:5433); **prod is `mycelium_prod` on outpost** — point
+the host's Postgres (db `mycelium_dev`, role `readonly`, localhost:5432; until
+2026-10-23 the `mycelium_postgres` container on 5433); **prod is `mycelium_prod`
+on outpost** — point
 `CALLIOPE_MYCELIUM_PG_DSN` there (readonly role / SSH tunnel) for the real seed.
 The schema is the same.
 

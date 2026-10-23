@@ -30,7 +30,9 @@ func runAgent(image string, envelope []byte) ([]byte, error) {
 		"-e", "CALLIOPE_OLLAMA_BASE_URL=http://" + host + ":11434",
 		"-e", "CALLIOPE_LETTA_BASE_URL=http://" + host + ":8283",
 		"-e", "CALLIOPE_PG_DSN=postgresql://calliope:calliope@" + host + ":5434/calliope",
-		"-e", "CALLIOPE_MYCELIUM_PG_DSN=postgresql://postgres:postgres@" + host + ":5433/mycelium_dev",
+		// The readonly role's password is not in this repo: set
+		// CALLIOPE_MYCELIUM_PG_DSN for the dispatcher to a DSN that carries it.
+		"-e", "CALLIOPE_MYCELIUM_PG_DSN=" + env("CALLIOPE_MYCELIUM_PG_DSN", "postgresql://readonly@"+host+":5432/mycelium_dev"),
 		image, "serve-task", string(envelope),
 	}
 	return exec.Command("podman", args...).Output()

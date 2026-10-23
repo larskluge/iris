@@ -22,9 +22,12 @@ class Settings(BaseSettings):
     # Learning loop: curate the style guide after this many uncurated edits.
     curate_threshold: int = 5
 
-    # mycelium read models (read-only seed corpus). Default = local dev DB; point
-    # at mycelium_prod on outpost (readonly role / SSH tunnel) for the real seed.
-    mycelium_pg_dsn: str = "postgresql://postgres:postgres@localhost:5433/mycelium_dev"
+    # mycelium read models (read-only seed corpus). Default = the local dev DB on
+    # the host's Postgres, as its `readonly` role; the password is not in this
+    # repo, so libpq takes it from ~/.pgpass or PGPASSWORD, or put the whole DSN
+    # in CALLIOPE_MYCELIUM_PG_DSN. Point that at mycelium_prod on outpost
+    # (readonly role / SSH tunnel) for the real seed.
+    mycelium_pg_dsn: str = "postgresql://readonly@localhost:5432/mycelium_dev"
     mycelium_self_emails: list[str] = [
         "l@larskluge.com", "me@aekym.com", "la@aekym.com", "andreas@aekym.com",
     ]

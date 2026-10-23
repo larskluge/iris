@@ -27,6 +27,6 @@ Notes for agents working in this repo (Iris — a mesh of self-learning agents).
 
 - Model: Ollama `gemma4:31b-mlx` — a *thinking* model; pass `think:false` for prose (`calliope.ollama`).
 - Letta is the **memory plane only**; generation runs via **direct Ollama** (local models aren't reliable tool-callers).
-- Postgres is on host port **5434** (5433 is mycelium's); pgvector is enabled via an init script.
+- Postgres is on host port **5434** (5432 is the host's own Postgres, which also holds mycelium's dev DB); pgvector is enabled via an init script.
 - Containers reach host services via `host.containers.internal`.
 - Everything is `local-only` (R13): no cloud model calls.

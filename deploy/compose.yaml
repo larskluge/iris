@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: calliope
       POSTGRES_PASSWORD: calliope
       POSTGRES_DB: calliope
-    ports: ["5434:5432"]   # 5433 is taken by mycelium_postgres on this host
+    ports: ["5434:5432"]   # 5432 is the host's own Postgres
     volumes:
       - "pgdata:/var/lib/postgresql/data"
       - "./postgres/init:/docker-entrypoint-initdb.d:ro"
